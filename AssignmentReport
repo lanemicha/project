@@ -1,0 +1,158 @@
+# This report describes how the analysis using R was conducted to build and test a predictive model 
+# for six people's activity regarding their use of a dumbell. The data set was obtained from 
+# accelerometers on the belt, forearm, arm, and dumbell of the 6 participants. They were asked to 
+# perform barbell lifts correctly and incorrectly in 5 different ways.
+
+
+# Load r libraries
+library(caret)
+library(randomForest)
+
+# data sets for Assignment were downloaded and stored in local working directory for Assignment using
+# R Studio
+# Set working directory for Machine Learning Assignment
+setwd("~/CIS8008-S1-15/Coursera-PML-Jan-2015/Assignment1")
+
+# Read inital training data
+dataset <- read.csv("~/CIS8008-S1-15/Coursera-PML-Jan-2015/Assignment1/training.csv")
+dim(dataset)
+
+# Partition initial training data set into 75% for training and 25% for validation data set
+inTraining = createDataPartition(dataset$classe, p = .75, list = FALSE)
+training = dataset[ inTraining,]
+validation = dataset[-inTraining,]
+dim(training); dim (validation)
+#training data set dimensions 14718 rows 160 variables (75% of initial training data set)
+#validation data set dimensions 4904 rows 160 variables (25% of initial training data set)
+
+#Read test data for final evaluation of accuracy of prediction model built on training data set 
+# and validated with validation data set
+testing <- read.csv("~/CIS8008-S1-15/Coursera-PML-Jan-2015/Assignment1/test.csv")
+dim(testing)
+#testing data set dimensions 20 rows 160 variables
+
+# Conduct Exploratory data analysis to gain an understanding of training data variables with the view
+# to achieving data reduction as there are lot of variables in the training data which do not 
+# contribute to prediction of target variable class activity. An important part of the exploratory 
+# data analysis was to read a research paper available from the project website which conducted a 
+# similar analysis in order to have a good insight into the nature of predictor variables and 
+# dependent variable class activity and objectives of the project
+
+# view the training data set once it has loaded into R environment via R Studio
+summary(training)
+str(training)
+view(training)
+
+# Remove columns that have any NA values, 
+training = training[,!apply( training, 2, function(x) any(is.na(x)) )]
+validation = validation[,!apply(validation, 2, function(x) any(is.na(x)) )]
+dim(training); dim(validation)
+# reduced training and validation data sets to 93 variables
+
+#remove near zero variables from training data set
+nzv <- nearZeroVar(training)
+training <- training[, -nzv]
+#remove near zero variables from validation data set
+nzv <- nearZeroVar(validation)
+validation <- validation[, -nzv]
+dim(training); dim(validation)
+str(training);str(validation)
+names(training[,1:7])
+# reduced training and validation data sets to 59 variables
+
+# remove first six columns based on column name which are not relevant for prediction of 
+# class activity in training and validation data sets such as row index, username id, 
+# timestamp variables and number of windows
+drops <- c("X","user_name","raw_timestamp_part_1","raw_timestamp_part_2","cvtd_timestamp"
+           ,"num_window")
+training = training[,!(names(training) %in% drops)]
+validation = validation[,!(names(validation) %in% drops)]
+
+dim(training);dim(validation)
+str(training);str(validation)
+# reduced training and validation data sets to 53 variables
+
+# set random seed value to ensure consistency in reruns of random forest model
+set.seed(12345)
+
+# Random forest was chosen as method for machine learning prediction
+# 1. Random forests are well suited to handle a large number of variables, especially when the 
+# interactions between variables are unknown.
+# 2. A random forest has a built in crossvalidation component that gives an unbiased estimate of the 
+# forest outofsample (OOB) error rate. This OOB error rate can be helpful in tuning the forests 
+# parameters.
+# 3. A random forest can be used to estimate variable importance. This is helpful if the 
+# goal is to reduce the number of variables in the model into a more parsimonious set.
+# 4. A random forest can handle unscaled variables and categorical variables, which reduces the need 
+# for cleaning and transforming variables, steps that can be subject to overfitting and noise.
+# 5. Individual trees can be pulled out of the random forest and examined. We can determine how the 
+# random forest method is arriving at its predicted classifications for training and validataion 
+# data sets.
+# 6. The random forest's classification output can be expressed as a probability 
+# (# trees w classification / total # of trees)and a confidence estimate for each classification
+
+# set parameters for random forest model using train function in caret
+# set random forest as method for training model, cross validation set to 5, set proximity to true
+# allow parallel processing
+rf_model = train(classe~.,data=training,method="rf",
+                trControl=trainControl(method="cv",number=5),
+                prox=TRUE,allowParallel=TRUE)
+
+# print random forest model output
+print(rf_model,decimals = 4)
+print(rf_model$finalModel, digits = 4)
+
+# plot random forest model output
+plot(rf_model, 
+     main ="Cross validation accuracy for randomly selected variables, optimal for 27 variables")
+plot(rf_model$finalModel, main ="Error rate for prediction of classe activity across 500 RF Trees")
+
+# Print and plot top 20 predictor variables in final model
+rfImp =varImp(rf_model)
+print(rfImp)
+plot(rfImp,top=20, main ="Top 20 predictor variables for classe activity")
+
+
+
+# prediction on training data set
+trainingclass <- predict(rf_model)
+cfMatrix = confusionMatrix(data = trainingclass, training$classe)
+print(cfMatrix,digits=4)
+
+# prediction on validation data set
+validationclass = predict(rf_model, newdata = validation)
+cfMatrix <- confusionMatrix(data = validationclass, validation$classe)
+print(cfMatrix,digits=4)
+
+# Calculate error rate of final random forest model using validation data set prediction
+missClass = function(values, prediction) {
+  sum(prediction != values)/length(values)
+} 
+
+errorRate = missClass(validation$classe, validationclass)
+print(errorRate,digits = 4)
+# Based on the missclassificaiton rate on the testing subset, an unbiased estimate of the 
+# random forest's out of sample is error rate is 0.44%.
+
+
+# final model evaluated against testing data set
+predict.testing = predict(rf_model, newdata = testing)
+summary(predict.testing)
+print(predict.testing)
+str(predict.testing)
+
+# Function to store answers
+pml_write_files = function(x){
+  n = length(x)
+  for(i in 1:n){
+    filename = paste0("problem_id_",i,".txt")
+    write.table(x[i],file=filename,quote=FALSE,row.names=FALSE,col.names=FALSE)
+  }
+}
+
+#Write results of final model evaluated against testing data to working direction for Assignment
+pml_write_files(predict.testing)
+
+# Final model successfully predicted all 20 test cases
+
+
