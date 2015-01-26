@@ -70,7 +70,7 @@ validation = validation[,!(names(validation) %in% drops)]
 
 dim(training);dim(validation)
 str(training);str(validation)
-# reduced training and validation data sets to 53 variables
+# reduced training and validation data sets to 53 variables (52 predictor variables and classe dependent variables
 
 # set random seed value to ensure consistency in reruns of random forest model
 set.seed(12345)
@@ -177,6 +177,7 @@ plot(rfImp,top=20, main ="Top 20 predictor variables for classe activity")
 
 # Link to random forest model plots  referenced previously 
 https://www.dropbox.com/s/6mpfxwn8bih5oih/plots-rf-model-output.pdf?dl=0
+
 # prediction on training data set
 trainingclass <- predict(rf_model)
 cfMatrix = confusionMatrix(data = trainingclass, training$classe)
