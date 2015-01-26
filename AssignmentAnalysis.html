@@ -1,0 +1,66 @@
+Assignment_Report
+Michael Lane
+
+Monday, January 26, 2015
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see http://rmarkdown.rstudio.com.
+
+When you click the Knit button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r} # Load r libraries library(caret) library(randomForest) # Read inital training data dataset <- read.csv(“~/CIS8008-S1-15/Coursera-PML-Jan-2015/Assignment1/training.csv”) dim(dataset)
+
+Partition initial training data set into 75% for training and 25% for validation data set
+inTraining = createDataPartition(dataset$classe, p = .75, list = FALSE) training = dataset[ inTraining,] validation = dataset[-inTraining,] dim(training); dim (validation)
+
+Read test data for final evaluation of accuracy of prediction model built on training data set
+and validation data set
+testing <- read.csv(“~/CIS8008-S1-15/Coursera-PML-Jan-2015/Assignment1/test.csv”) dim(testing)
+
+Conduct Exploratory data analysis to gain an understanding of training data with the view to data reduction
+as there are lot of variables in the training data which do not contribute to prediction of target
+variable class activity
+
+An important part of the exploratory data analysis was to read a research paper available from the project website 
+which conducted a similar analysis and provide good insight into the nature of predictor variables and dependent variable 
+class activity
+
+view the data set
+summary(training) str(training) view(training)
+
+Use this command to remove columns that have any NA values,
+training = training[,!apply( training, 2, function(x) any(is.na(x)) )] validation = validation[,!apply(validation, 2, function(x) any(is.na(x)) )]
+
+remove additional columns based on column name which are not relevant for
+prediction of class activity for training and validation data sets
+drops <- c(“X”,“raw_timestamp_part_1”,“raw_timestamp_part_2”,“cvtd_timestamp”) training = training[,!(names(training) %in% drops)] validation = validation[,!(names(validation) %in% drops)] str(training); dim(training) str(validation); dim(validation) # reduced training and validation data sets to 89 variables
+
+remove near zero variables from training data set
+nzv <- nearZeroVar(training) training <- training[, -nzv] #remove near zero variables from validation data set nzv <- nearZeroVar(validation) validation <- validation[, -nzv] dim(training);dim(validation) str(training);str(validation) summary(training); summary(validation) # reduced training data set to 55 variables
+
+set random seed value to ensure consistency in reruns of random forest model
+set.seed(12345)
+
+set parameters for random forest model using train function in caret
+rf_model = train(classe~.,data=training,method=“rf”, trControl=trainControl(method=“cv”,number=5), prox=TRUE,allowParallel=TRUE)
+
+print(rf_model); print(rf_model$finalModel); rfImp =varImp(rf_model) print(rfImp)
+
+plot(rf_model); plot(rf_model$finalModel,trainingclasse); plot(rfImp,top=20)
+
+validationclass = predict(rf_model, newdata = validation); cfMatrix <- confusionMatrix(validationclass, validation$classe); print(cfMatrix,digits=4)
+
+Calculate error rate of final random forest model
+missClass = function(values, prediction) { sum(prediction != values)/length(values) }
+
+errorRate = missClass(validation$classe, validationclass) print(errorRate,digits = 4)
+
+validation model evaluated against testing data set
+predict.cv.class <- predict(rf_model, newdata = testing) summary(predict.cv.class) print(predict.cv.class) str(predict.cv.class)
+
+Function to store answers
+pml_write_files = function(x){ n = length(x) for(i in 1:n){ filename = paste0(“problem_id_”,i,“.txt”) write.table(x[i],file=filename,quote=FALSE,row.names=FALSE,col.names=FALSE) } }
+
+Write results of final model evaluated against testing data to working direction for Assignment
+pml_write_files(predict.cv.class)
+
+```
