@@ -100,16 +100,79 @@ rf_model = train(classe~.,data=training,method="rf",
 
 # print random forest model output
 print(rf_model,decimals = 4)
+
+Random Forest 
+
+14718 samples
+   52 predictor
+    5 classes: 'A', 'B', 'C', 'D', 'E' 
+
+No pre-processing
+Resampling: Cross-Validated (5 fold) 
+
+Summary of sample sizes: 11774, 11774, 11775, 11774, 11775 
+
+Resampling results across tuning parameters:
+
+  mtry  Accuracy   Kappa      Accuracy SD  Kappa SD   
+   2    0.9912351  0.9889116  0.001546963  0.001957429
+  27    0.9920503  0.9899432  0.002693095  0.003407296
+  52    0.9844402  0.9803141  0.005179191  0.006554124
+
+Accuracy was used to select the optimal model using  the largest value.
+The final value used for the model was mtry = 27.
+
 print(rf_model$finalModel, digits = 4)
+Call:
+ randomForest(x = x, y = y, mtry = param$mtry, proximity = TRUE,      allowParallel = TRUE) 
+               Type of random forest: classification
+                     Number of trees: 500
+No. of variables tried at each split: 27
+
+        OOB estimate of  error rate: 0.63%
+Confusion matrix:
+     A    B    C    D    E  class.error
+A 4181    4    0    0    0 0.0009557945
+B   21 2823    4    0    0 0.0087780899
+C    0   11 2547    9    0 0.0077911959
+D    0    0   28 2382    2 0.0124378109
+E    0    2    5    7 2692 0.0051736881
 
 # plot random forest model output
 plot(rf_model, 
      main ="Cross validation accuracy for randomly selected variables, optimal for 27 variables")
+
 plot(rf_model$finalModel, main ="Error rate for prediction of classe activity across 500 RF Trees")
 
 # Print and plot top 20 predictor variables in final model
 rfImp =varImp(rf_model)
 print(rfImp)
+rf variable importance
+
+  only 20 most important variables shown (out of 52)
+
+                     Overall
+roll_belt             100.00
+pitch_forearm          59.14
+yaw_belt               54.50
+pitch_belt             43.75
+magnet_dumbbell_z      43.46
+magnet_dumbbell_y      43.12
+roll_forearm           42.27
+accel_dumbbell_y       23.09
+roll_dumbbell          18.15
+accel_forearm_x        17.83
+magnet_dumbbell_x      17.65
+magnet_belt_z          15.28
+accel_belt_z           14.27
+accel_dumbbell_z       14.14
+magnet_forearm_z       13.59
+total_accel_dumbbell   12.93
+magnet_belt_y          12.86
+yaw_arm                10.94
+gyros_belt_z           10.74
+magnet_belt_x          10.45
+
 plot(rfImp,top=20, main ="Top 20 predictor variables for classe activity")
 
 
@@ -118,11 +181,75 @@ plot(rfImp,top=20, main ="Top 20 predictor variables for classe activity")
 trainingclass <- predict(rf_model)
 cfMatrix = confusionMatrix(data = trainingclass, training$classe)
 print(cfMatrix,digits=4)
+Confusion Matrix and Statistics
+
+          Reference
+Prediction    A    B    C    D    E
+         A 4185    0    0    0    0
+         B    0 2848    0    0    0
+         C    0    0 2567    0    0
+         D    0    0    0 2412    0
+         E    0    0    0    0 2706
+
+Overall Statistics
+                                     
+               Accuracy : 1          
+                 95% CI : (0.9997, 1)
+    No Information Rate : 0.2843     
+    P-Value [Acc > NIR] : < 2.2e-16  
+                                     
+                  Kappa : 1          
+ Mcnemar's Test P-Value : NA         
+
+Statistics by Class:
+
+                     Class: A Class: B Class: C Class: D Class: E
+Sensitivity            1.0000   1.0000   1.0000   1.0000   1.0000
+Specificity            1.0000   1.0000   1.0000   1.0000   1.0000
+Pos Pred Value         1.0000   1.0000   1.0000   1.0000   1.0000
+Neg Pred Value         1.0000   1.0000   1.0000   1.0000   1.0000
+Prevalence             0.2843   0.1935   0.1744   0.1639   0.1839
+Detection Rate         0.2843   0.1935   0.1744   0.1639   0.1839
+Detection Prevalence   0.2843   0.1935   0.1744   0.1639   0.1839
+Balanced Accuracy      1.0000   1.0000   1.0000   1.0000   1.0000
+
 
 # prediction on validation data set
 validationclass = predict(rf_model, newdata = validation)
 cfMatrix <- confusionMatrix(data = validationclass, validation$classe)
 print(cfMatrix,digits=4)
+Confusion Matrix and Statistics
+
+          Reference
+Prediction    A    B    C    D    E
+         A 1392    5    0    0    0
+         B    0  942    4    0    0
+         C    2    2  850    4    1
+         D    0    0    1  800    1
+         E    1    0    0    0  899
+
+Overall Statistics
+                                          
+               Accuracy : 0.9957          
+                 95% CI : (0.9935, 0.9973)
+    No Information Rate : 0.2845          
+    P-Value [Acc > NIR] : < 2.2e-16       
+                                          
+                  Kappa : 0.9946          
+ Mcnemar's Test P-Value : NA              
+
+Statistics by Class:
+
+                     Class: A Class: B Class: C Class: D Class: E
+Sensitivity            0.9978   0.9926   0.9942   0.9950   0.9978
+Specificity            0.9986   0.9990   0.9978   0.9995   0.9998
+Pos Pred Value         0.9964   0.9958   0.9895   0.9975   0.9989
+Neg Pred Value         0.9991   0.9982   0.9988   0.9990   0.9995
+Prevalence             0.2845   0.1935   0.1743   0.1639   0.1837
+Detection Rate         0.2838   0.1921   0.1733   0.1631   0.1833
+Detection Prevalence   0.2849   0.1929   0.1752   0.1635   0.1835
+Balanced Accuracy      0.9982   0.9958   0.9960   0.9973   0.9988
+
 
 # Calculate error rate of final random forest model using validation data set prediction
 missClass = function(values, prediction) {
@@ -131,15 +258,19 @@ missClass = function(values, prediction) {
 
 errorRate = missClass(validation$classe, validationclass)
 print(errorRate,digits = 4)
+[1] 0.004282
 # Based on the missclassificaiton rate on the testing subset, an unbiased estimate of the 
-# random forest's out of sample is error rate is 0.44%.
-
+# random forest's out of sample is error rate is 0.44% which is an improvement on 0.63%.
 
 # final model evaluated against testing data set
 predict.testing = predict(rf_model, newdata = testing)
 summary(predict.testing)
+A B C D E 
+7 8 1 1 3 
+
 print(predict.testing)
-str(predict.testing)
+[1] B A B A A E D B A A B C B A E E A B B B
+Levels: A B C D E
 
 # Function to store answers
 pml_write_files = function(x){
