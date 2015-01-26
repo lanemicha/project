@@ -175,8 +175,8 @@ magnet_belt_x          10.45
 
 plot(rfImp,top=20, main ="Top 20 predictor variables for classe activity")
 
-
-
+# Link to random forest model plots  referenced previously 
+https://www.dropbox.com/s/6mpfxwn8bih5oih/plots-rf-model-output.pdf?dl=0
 # prediction on training data set
 trainingclass <- predict(rf_model)
 cfMatrix = confusionMatrix(data = trainingclass, training$classe)
