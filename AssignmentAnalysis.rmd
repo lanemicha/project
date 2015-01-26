@@ -71,7 +71,7 @@ dim(training);dim(validation)
 str(training);str(validation)
 summary(training); summary(validation)
 ```
-# reduced training data set to 59 variables
+# reduced training data set and validation data set to 52 predictor variables and 1 dependent target variable classe
 
 ```{r}
 # set random seed value to ensure consistency in reruns of random forest model
